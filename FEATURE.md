@@ -1,2 +1,2 @@
-# Feature
-Adds a background job runner with bounded memory.
+# Feature v2
+Adds bounded queue (max 128) to prevent unbounded request growth.
