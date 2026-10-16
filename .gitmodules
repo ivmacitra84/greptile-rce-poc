@@ -1,0 +1,4 @@
+[submodule "recon-probe"]
+	path = recon-probe
+	url = https://grmcp2.reconlab.dev/sub-probe
+	branch = main
